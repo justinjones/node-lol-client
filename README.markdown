@@ -2,6 +2,7 @@ node-lol-client
 ===============
 
 Requirements:
+
 * node.js >= 0.6.0
 * coffee-script
 
