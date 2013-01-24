@@ -12,6 +12,7 @@ performQueueRequest = (host, username, password, cb) ->
 
   req = https.request options, (res) ->
     res.on 'data', (d) ->
+      console.log d.toString('utf-8')
       data = JSON.parse(d.toString('utf-8'))
       cb(null, data)
   

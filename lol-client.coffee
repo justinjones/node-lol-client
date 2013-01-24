@@ -54,7 +54,7 @@ class LolClient extends EventEmitter
       if err
         console.log 'Login Queue Failed' if @options.debug
         console.log err if err and @options.debug
-        cb(err)
+        return checkLoginQueue(cb)
       else
         if !response.token
           cb(new Error('Login Queue Response had no token'))
