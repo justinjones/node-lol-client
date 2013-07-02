@@ -1,0 +1,64 @@
+{	"node": 757,
+	"vcap": 20000,
+	"rate": 80,
+
+	"tickers": [{
+	"id": 504808,
+	"node": 755,
+	"champ": "Katarina",
+	"current": 504803},
+
+	{"id": 502681,
+	"node": 755,
+	"champ": "Katarina",
+	"current": 502680},
+
+	{"id": 495640,
+	"node": 754,
+	"champ": "Katarina",
+	"current": 495}
+
+
+	]}
+
+
+Handler for login queue is wrong
+
+* Mistakes !token as 'no response', but actually is 'in queue'
+
+* It should display that it is in queue, continually retry and update information about the queue
+
+node = login queue ID
+champ = Name of login queue
+rate = Number of tickets being processed every update
+delay = How often the queue updates
+id = Our ticket in line
+current = Current ticket being processed
+
+So
+
+id - current = Our spot "in line"
+
+Continually send response and check, sleep time = delay, update the ticker
+
+Then continue login process like normal once we retrive a login token.
+
+
+String champ = result.getString("champ"); // The name of our login queue
+			int rate = result.getInt("rate"); // How many tickets are processed every queue update
+			int delay = result.getInt("delay"); // How often the queue status updates
+			
+			int id = 0;
+			int cur = 0;
+			Object[] tickers = result.getArray("tickers");
+			for (Object o : tickers)
+			{
+				TypedObject to = (TypedObject)o;
+				
+				// Find our queue
+				int tnode = to.getInt("node");
+				if (tnode != node)
+					continue;
+				
+				id = to.getInt("id"); // Our ticket in line
+				cur = to.getInt("current"); // The current ticket being processed
