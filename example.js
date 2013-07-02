@@ -8,8 +8,8 @@
 
   options = {
     region: 'na',
-    username: 'icolorupsb',
-    password: '1newpassword',
+    username: 'username_here', // LOWERCASE OR IT WILL NOT WORK. Please add a function to convert to lowercase just in case.
+    password: 'password_here',
     version: '3.8.13_06_12_20_25'
   };
 
