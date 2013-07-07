@@ -63,9 +63,11 @@ String champ = result.getString("champ"); // The name of our login queue
 				id = to.getInt("id"); // Our ticket in line
 				cur = to.getInt("current"); // The current ticket being processed
 				
-// FIXING TIMEOUT
+// FIXING TIMEOUT (Code from https://github.com/achimala/leaguelib/blob/master/src/com/gvaneyck/rtmp/LoLRTMPSClient.java#L291 )
 
-
+body = wrapBody(new Object[] { new TypedObject() }, "messagingDestination", 0);
+		body.type = "flex.messaging.messages.CommandMessage";
+		
 		headers.put("DSSubtopic", "bc");
 		body.put("clientId", "bc-" + accountID);
 		id = invoke(body);
