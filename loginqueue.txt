@@ -62,3 +62,32 @@ String champ = result.getString("champ"); // The name of our login queue
 				
 				id = to.getInt("id"); // Our ticket in line
 				cur = to.getInt("current"); // The current ticket being processed
+				
+// FIXING TIMEOUT
+
+
+		headers.put("DSSubtopic", "bc");
+		body.put("clientId", "bc-" + accountID);
+		id = invoke(body);
+		result = getResult(id); // Read result and discard
+
+		// cn
+		headers.put("DSSubtopic", "cn-" + accountID);
+		body.put("clientId", "cn-" + accountID);
+		id = invoke(body);
+		result = getResult(id); // Read result and discard
+
+		// gn
+		headers.put("DSSubtopic", "gn-" + accountID);
+		body.put("clientId", "gn-" + accountID);
+		id = invoke(body);
+		result = getResult(id); // Read result and discard
+		
+We must subscribe to these, for it to properly work, we must grab our accountID (maybe grab own accountID, and then subscribe as the last step?)
+
+The entire login process for LoL:
+1) Go through LoL's HTTPS api for requesting a queue token. If not processed, you are put into a queue for a queue token.
+2) Connect using RTMPS.
+3) Once connected, send login packet using the queue token from Step 1 and retrieve an authentication token.
+4) Send authentication packet with authentication token
+5) Subscribe to BC, CN, GN (I have no idea what these mean, but we need to do it?) to complete the whole process.
