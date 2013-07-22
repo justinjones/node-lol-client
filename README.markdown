@@ -1,11 +1,13 @@
-node-lol-client
+league-node
 ===============
 
-Requirements:
+Forked from https://github.com/nagash/node-lol-client , credits for his work on most of the base code, and especially the namf module used to decode/encode the objects.
 
-* node.js >= 0.6.0
-* coffee-script
+This fork aims to fix the bugs left behind in the original project, and expand the features for developmental purposes.
 
-I recommend using nvm to install node, and npm to install coffee-script.
+Currently works with version: '3.8.13_06_12_20_25' (As of 7/2/13)
 
-Then see example.coffee
+View example.js to get an understanding of how the client works.
+
+DOCUMENTATION NEEDED
+--------------------
