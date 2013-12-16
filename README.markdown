@@ -5,7 +5,7 @@ Forked from https://github.com/nagash/node-lol-client , credits for his work on 
 
 This fork aims to fix the bugs left behind in the original project, and expand the features for developmental purposes.
 
-Currently works with version: '3.8.13_06_12_20_25' (As of 7/2/13)
+Currently works with version: '3.15.13_12_13_16_07' (As of 12/15/13)
 
 View example.js to get an understanding of how the client works.
 
