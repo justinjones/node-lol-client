@@ -19,6 +19,8 @@
 
   EventEmitter = require('events').EventEmitter;
 
+  var util = require('util');
+
   LolClient = (function(_super) {
     __extends(LolClient, _super);
 
@@ -33,6 +35,7 @@
       'euw': 'lq.eu.lol.riotgames.com',
       'eune': 'lq.eun1.lol.riotgames.com'
     };
+    
 
     function LolClient(options) {
       this.options = options;
@@ -45,6 +48,13 @@
       this.getSummonerByName = __bind(this.getSummonerByName, this);
       this.performAuth = __bind(this.performAuth, this);
       this.performLogin = __bind(this.performLogin, this);
+      this.getCurrentGameByName = __bind(this.getCurrentGameByName, this);
+      this.GNPacket = __bind(this.GNPacket, this);
+      this.CNPacket = __bind(this.CNPacket, this);
+      this.BCPacket = __bind(this.BCPacket, this);
+      this.HeartBeat = __bind(this.HeartBeat, this);
+
+
       if (this.options.region) {
         this.options.host = this._rtmpHosts[this.options.region];
         this.options.lqHost = this._loginQueueHosts[this.options.region];
@@ -55,12 +65,14 @@
       this.options.port = this.options.port || 2099;
       this.options.username = this.options.username;
       this.options.password = this.options.password;
-      this.options.version = this.options.version || '3.8.13_06_12_20_25';
+      this.options.version = this.options.version || '3.15.13_12_13_16_07';
       this.options.debug = this.options.debug || false;
       if (this.options.debug) {
-        console.log(this.options);
+        //console.log(this.options);
       }
     }
+
+
 
     LolClient.prototype.connect = function(cb) {
       var _this = this;
@@ -98,7 +110,7 @@
             delay = response.delay, // How often the queue updates
             node = response.node;
             id = 0, cur = 0;
-
+            //console.log(response);
             for (var i=0; i<response.tickers.length; i++){
               if (response.tickers[i].node == node){ // Find our login node, and retrieve data
                 id = response.tickers[i].id;
@@ -148,7 +160,7 @@
       if (this.options.debug) {
         console.log('Setting up RTMP Client');
       }
-      this.rtmp = new RTMPClient(this.stream);
+      this.rtmp = new RTMPClient(_this);
       if (this.options.debug) {
         console.log('Handshaking RTMP');
       }
@@ -205,7 +217,37 @@
         }
       });
     };
+    //HeartBeat method
+    LolClient.prototype.HeartBeat = function() {
+      var stop = false;
+      var returnheart = function(){
+        return stop = true;
+      }
 
+      
+
+      var HeartBeat, cmd,
+        _this = this;
+      if (this.options.debug) {
+        console.log('Performing HeartBeat');
+      }
+      HeartBeat = lolPackets.HeartbeatPacket;
+      
+      
+      cmd = new RTMPCommand(0x11, null, null, null, [new HeartBeat(this.options).generate()]);
+      return _this.rtmp.send(cmd, function(err, result) {
+        if (err) {
+          if (_this.options.debug) {
+            console.log('HeartBeat Failed');
+            console.log(err);
+          }
+          
+        } else {
+          
+          return console.log('HeartBeat Success');
+        }
+      });
+    };
     LolClient.prototype.performAuth = function(result) {
       var AuthPacket, cmd,
         _this = this;
@@ -214,6 +256,9 @@
       }
       AuthPacket = lolPackets.AuthPacket;
       this.options.authToken = result.args[0].body.object.token;
+      this.options.acctId = result.args[0].body.object.accountSummary.object.accountId.value;
+
+
       cmd = new RTMPCommand(0x11, null, null, null, [new AuthPacket(this.options).generate()]);
       return this.rtmp.send(cmd, function(err, result) {
         if (err) {
@@ -221,22 +266,117 @@
             return console.log('RTMP Auth failed');
           }
         } else {
-          if (_this.options.debug) {
-            console.log('Connect Process Completed');
-          }
-          return _this.emit('connection');
+          return _this.subscribeGN(result);
         }
       });
     };
+
+//Subscribes to GN, CN, BC
+  LolClient.prototype.subscribeGN = function(result) {
+      var GNPacket, cmd,
+        _this = this;
+      if (this.options.debug) {
+        console.log('Performing GN Subscription');
+      }
+      GNPacket = lolPackets.GNPacket;
+
+      
+      cmd = new RTMPCommand(0x11, null, null, null, [new GNPacket(this.options).generate(this.options.acctId)]);
+      return this.rtmp.send(cmd, function(err, result) {
+        if (err) {
+          if (_this.options.debug) {
+            console.log('GN Subscription Failed');
+          }
+          return _this.stream.destroy();
+        } else {
+         return _this.subscribeCN(result);
+          
+        }
+      });
+    };
+
+   LolClient.prototype.subscribeCN = function(result) {
+    var CNPacket, cmd,
+      _this = this;
+    if (this.options.debug) {
+      console.log('Performing CN Subscription');
+    }
+    CNPacket = lolPackets.CNPacket;
+    
+      
+    
+    cmd = new RTMPCommand(0x11, null, null, null, [new CNPacket(this.options).generate(_this.options.acctId)]);
+    return this.rtmp.send(cmd, function(err, result) {
+      if (err) {
+        if (_this.options.debug) {
+          console.log('CN Subscription Failed');
+        }
+        return _this.stream.destroy();
+      } else {
+        
+        return _this.subscribeBC(result);
+      }
+    });
+  };
+
+
+    LolClient.prototype.subscribeBC = function(result) {
+      var BCPacket, cmd,
+        _this = this;
+      if (this.options.debug) {
+        console.log('Performing BC Subscription');
+      }
+      BCPacket = lolPackets.BCPacket;
+      
+      cmd = new RTMPCommand(0x11, null, null, null, [new BCPacket(this.options).generate(_this.options.acctId)]);
+      return this.rtmp.send(cmd, function(err, result) {
+        if (err) {
+          if (_this.options.debug) {
+            return console.log('BC Subscription failed');
+          }
+        } else {
+          
+
+           if (_this.options.debug) {
+            
+            console.log('Connect Process Completed');
+          }
+          return _this.emit('connection');
+
+        }
+      });
+    };
+
 
     LolClient.prototype.getSummonerByName = function(name, cb) {
       var LookupPacket, cmd,
         _this = this;
       if (this.options.debug) {
+
         console.log("Finding player by name: " + name);
       }
       LookupPacket = lolPackets.LookupPacket;
       cmd = new RTMPCommand(0x11, null, null, null, [new LookupPacket(this.options).generate(name)]);
+      return this.rtmp.send(cmd, function(err, result) {
+        var _ref, _ref1;
+        if (err) {
+          return cb(err);
+        }
+        if ((result != null ? (_ref = result.args) != null ? (_ref1 = _ref[0]) != null ? _ref1.body : void 0 : void 0 : void 0) == null) {
+          return cb(err, null);
+        }
+        return cb(err, result.args[0].body);
+      });
+    };
+//Added method for getting current game by summoner name.
+   LolClient.prototype.getCurrentGameByName = function(name, cb) {
+      var GetCurrentGamePacket, cmd,
+        _this = this;
+      if (this.options.debug) {
+        console.log("Getting Current Game By Name: " + name);
+      }
+      GetCurrentGamePacket = lolPackets.GetCurrentGamePacket;
+      cmd = new RTMPCommand(0x11, null, null, null, [new GetCurrentGamePacket(this.options).generate(name)]);
       return this.rtmp.send(cmd, function(err, result) {
         var _ref, _ref1;
         if (err) {

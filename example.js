@@ -8,9 +8,9 @@
 
   options = {
     region: 'na',
-    username: 'username_here', // LOWERCASE OR IT WILL NOT WORK. Please add a function to convert to lowercase just in case.
-    password: 'password_here',
-    version: '3.8.13_06_12_20_25'
+    username: 'username', // LOWERCASE OR IT WILL NOT WORK. Please add a function to convert to lowercase just in case.
+    password: 'password',
+    version: '3.15.13_12_13_16_07'
   };
 
   summoner = {
@@ -23,6 +23,7 @@
   client = new LolClient(options);
 
   client.on('connection', function() {
+    setInterval(client.HeartBeat, 5000)
     console.log('Connected');
     client.getSummonerByName(summoner.name, function(err, result) {
       return console.log(util.inspect(result, false, null, true));
